@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Stress Relief Games</title>
+    <link rel="stylesheet" href="games.css">
+    <script defer src="games.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="games-container">
+        <header class="games-header">
+            <a class="back-link" href="iski.html">⟵ Back to Dashboard</a>
+            <h1>Space Stress Relief</h1>
+            <p class="subtitle">Relax with quick space‑themed mini games</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-target="#flappy">Astro Flap</button>
+            <button class="tab" data-target="#breaker">Orbital Breaker</button>
+        </nav>
+
+        <main class="games-main">
+            <section id="flappy" class="panel active">
+                <div class="panel-header">
+                    <h2>Astro Flap</h2>
+                    <div class="controls">Click / Space to thrust</div>
+                </div>
+                <canvas id="flappy-canvas" width="480" height="640" aria-label="Astro Flap game canvas"></canvas>
+                <div class="hud" id="flappy-hud">
+                    <div>Score: <span id="flappy-score">0</span></div>
+                    <button id="flappy-start" class="primary">Start</button>
+                </div>
+            </section>
+
+            <section id="breaker" class="panel">
+                <div class="panel-header">
+                    <h2>Orbital Breaker</h2>
+                    <div class="controls">Move: ← → · Launch: Space</div>
+                </div>
+                <canvas id="breaker-canvas" width="600" height="480" aria-label="Orbital Breaker game canvas"></canvas>
+                <div class="hud" id="breaker-hud">
+                    <div>Lives: <span id="breaker-lives">3</span></div>
+                    <div>Score: <span id="breaker-score">0</span></div>
+                    <button id="breaker-start" class="primary">Start</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="games-footer">
+            <small>Made for calm focus in orbit ✦ Space theme inspired</small>
+        </footer>
+    </div>
+</body>
+</html>
+

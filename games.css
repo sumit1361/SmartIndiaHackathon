@@ -1,0 +1,67 @@
+:root {
+  --bg-0: #050816;
+  --bg-1: #0b1026;
+  --bg-2: #111736;
+  --accent: #6ee7ff;
+  --accent-2: #a78bfa;
+  --good: #34d399;
+  --bad: #fb7185;
+  --text: #e5e7eb;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  min-height: 100vh;
+  color: var(--text);
+  background: radial-gradient(1200px 600px at 10% 10%, #0f172a 0%, var(--bg-0) 40%),
+              radial-gradient(1000px 800px at 90% 20%, #1e293b 0%, var(--bg-1) 50%),
+              linear-gradient(180deg, var(--bg-1), var(--bg-2));
+  font-family: 'Orbitron', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.games-container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+.games-header { text-align: center; margin-bottom: 16px; }
+.games-header h1 { font-size: 28px; color: var(--accent); text-shadow: 0 0 10px rgba(110,231,255,.3); }
+.games-header .subtitle { color: #a1a1aa; margin-top: 6px; font-size: 14px; }
+
+.back-link { color: #cbd5e1; text-decoration: none; display: inline-block; margin-bottom: 8px; }
+.back-link:hover { color: white; }
+
+.tabs { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
+.tab {
+  background: rgba(59,130,246,.08);
+  border: 1px solid rgba(99,102,241,.3);
+  color: #c7d2fe;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.tab.active { background: rgba(167,139,250,.18); box-shadow: 0 0 0 2px rgba(167,139,250,.25) inset; }
+
+.games-main { display: grid; gap: 16px; }
+.panel { display: none; background: rgba(17,24,39,.5); border: 1px solid #1f2937; border-radius: 12px; padding: 16px; }
+.panel.active { display: block; }
+.panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
+.panel-header h2 { font-size: 18px; color: #c7d2fe; }
+.controls { color: #94a3b8; font-size: 12px; }
+
+canvas {
+  width: auto; /* keep intrinsic canvas size */
+  height: auto;
+  max-width: 100%; /* prevent overflow on very small windows */
+  background: radial-gradient(200px 200px at 30% 30%, rgba(99,102,241,.2), transparent), #000814;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  display: block;
+  margin: 0 auto;
+}
+
+.hud { display:flex; gap: 12px; align-items:center; justify-content:center; margin-top: 10px; }
+.primary { background: linear-gradient(90deg, #38bdf8, #818cf8); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+.primary:hover { filter: brightness(1.05); }
+
+.games-footer { text-align:center; color:#94a3b8; margin-top: 18px; font-size: 12px; }
+

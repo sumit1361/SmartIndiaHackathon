@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maitri: Psychological Companion AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark space background */
+            color: #e6e6e6;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .gradient-border {
+            border: 3px solid;
+            border-image: linear-gradient(45deg, #00c6ff, #0072ff) 1;
+            box-shadow: 0 4px 15px rgba(0, 114, 255, 0.4);
+        }
+        .loading-animation {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #00c6ff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="container mx-auto p-6 bg-gray-900 rounded-xl shadow-2xl">
+        <div class="flex flex-col items-center mb-6">
+            <div class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600 mb-2">
+                Maitri
+            </div>
+            <p class="text-sm text-gray-400">Psychological Companion & Mission Support</p>
+        </div>
+
+        <!-- Maitri's Response Display -->
+        <div id="response-container" class="bg-gray-800 p-4 rounded-lg mb-6 shadow-inner min-h-[100px] flex items-center justify-center">
+            <p id="maitri-response" class="text-lg text-gray-200 italic">
+                Hello, Astronaut. I am Maitri. Speak to me anytime you need support or guidance.
+            </p>
+        </div>
+
+        <!-- Astronaut's Input Display -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium mb-1 text-gray-400">Your Last Input:</label>
+            <div id="user-input" class="bg-gray-700 p-3 rounded-md text-gray-100 min-h-[40px] italic">
+                ... awaiting voice command ...
+            </div>
+        </div>
+
+        <!-- Microphone Button -->
+        <div class="flex justify-center">
+            <button id="mic-button" 
+                    class="relative flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-700 text-white rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg"
+                    aria-label="Start Voice Command">
+                <!-- Microphone Icon (Lucide Icon Library used conceptually) -->
+                <svg id="mic-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m8 0h-3m-1-9v4"></path>
+                </svg>
+                <!-- Loading Spinner (hidden initially) -->
+                <div id="loading-spinner" class="loading-animation hidden absolute"></div>
+            </button>
+        </div>
+        
+        <div class="text-center mt-4 text-gray-500 text-sm">
+            <p>Tap the button to talk.</p>
+            <p class="text-xs mt-2 text-gray-600">
+                <span class="inline-block bg-gray-800 px-2 py-1 rounded mr-2">Space</span> Start/Stop listening
+                <span class="inline-block bg-gray-800 px-2 py-1 rounded ml-4 mr-2">Esc</span> Stop speaking
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- API Configuration ---
+        const apiKey = ""; // Leave the API key empty; Canvas will provide it at runtime.
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        
+        // --- DOM Elements ---
+        const micButton = document.getElementById('mic-button');
+        const micIcon = document.getElementById('mic-icon');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const maitriResponse = document.getElementById('maitri-response');
+        const userInputDisplay = document.getElementById('user-input');
+
+        // --- Enhanced Speech Synthesis (Text-to-Speech for Maitri) ---
+        const synth = window.speechSynthesis;
+        let isSpeaking = false;
+        
+        function speak(text) {
+            if (!text || !synth) return;
+            
+            // Clear any existing speech
+            synth.cancel();
+            isSpeaking = false;
+            
+            const utterThis = new SpeechSynthesisUtterance(text);
+            utterThis.rate = 0.85; // Slightly slower pace for a calm, supportive tone
+            utterThis.pitch = 1.1; // Slightly higher pitch for warmth
+            utterThis.volume = 0.9;
+            
+            // Enhanced voice selection
+            const voices = synth.getVoices();
+            const preferredVoices = [
+                'Google US English Female',
+                'Microsoft Zira Desktop',
+                'Microsoft Hazel Desktop',
+                'Samantha'
+            ];
+            
+            const selectedVoice = voices.find(v => 
+                preferredVoices.some(pref => v.name.includes(pref))
+            ) || voices.find(v => v.lang.startsWith('en'));
+            
+            if (selectedVoice) {
+                utterThis.voice = selectedVoice;
+            }
+            
+            // Enhanced event handling
+            utterThis.onstart = () => {
+                isSpeaking = true;
+                micButton.disabled = true;
+            };
+            
+            utterThis.onend = () => {
+                isSpeaking = false;
+                micButton.disabled = false;
+            };
+            
+            utterThis.onerror = (event) => {
+                console.error('Speech synthesis error:', event.error);
+                isSpeaking = false;
+                micButton.disabled = false;
+            };
+            
+            synth.speak(utterThis);
+        }
+        
+        function stopSpeaking() {
+            if (synth.speaking) {
+                synth.cancel();
+                isSpeaking = false;
+                micButton.disabled = false;
+            }
+        }
+
+        // --- Enhanced Speech Recognition (Voice Input from Astronaut) ---
+        
+        // Check browser compatibility
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            maitriResponse.textContent = "Error: Speech Recognition is not supported in this browser.";
+            micButton.disabled = true;
+        }
+
+        let recognition = null;
+        let isListening = false;
+        let recognitionTimeout = null;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false; // Only process a single phrase
+            recognition.lang = 'en-US';
+            recognition.interimResults = true; // Enable interim results for better UX
+            recognition.maxAlternatives = 3; // Get multiple alternatives for better accuracy
+        }
+
+        function toggleListening(listening) {
+            isListening = listening;
+            micButton.disabled = listening || isSpeaking;
+            micIcon.classList.toggle('hidden', listening);
+            loadingSpinner.classList.toggle('hidden', !listening);
+            micButton.classList.toggle('bg-red-600', listening);
+            micButton.classList.toggle('from-blue-500', !listening);
+            micButton.classList.toggle('to-indigo-700', !listening);
+            
+            // Clear any existing timeout
+            if (recognitionTimeout) {
+                clearTimeout(recognitionTimeout);
+                recognitionTimeout = null;
+            }
+        }
+        
+        function startListening() {
+            if (!recognition || isListening || isSpeaking) return;
+            
+            // Stop any current speech
+            stopSpeaking();
+            
+            toggleListening(true);
+            maitriResponse.textContent = "Listening...";
+            userInputDisplay.textContent = "...";
+            
+            // Set a timeout for listening (30 seconds max)
+            recognitionTimeout = setTimeout(() => {
+                if (isListening) {
+                    recognition.stop();
+                    toggleListening(false);
+                    maitriResponse.textContent = "Listening timeout. Please try again.";
+                }
+            }, 30000);
+            
+            recognition.start();
+        }
+        
+        micButton.addEventListener('click', () => {
+            if (isListening) {
+                // If already listening, stop
+                recognition.stop();
+                toggleListening(false);
+                maitriResponse.textContent = "Stopped listening.";
+            } else {
+                startListening();
+            }
+        });
+
+        if (recognition) {
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                let interimTranscript = '';
+                
+                // Process both interim and final results
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                // Show interim results for better UX
+                if (interimTranscript) {
+                    userInputDisplay.textContent = interimTranscript + '...';
+                }
+                
+                // Process final result
+                if (finalTranscript) {
+                    userInputDisplay.textContent = finalTranscript;
+                    maitriResponse.textContent = "Analyzing your words for emotional markers...";
+                    analyzeToneAndRespond(finalTranscript);
+                }
+            };
+
+            recognition.onspeechend = () => {
+                // Clear timeout when speech ends naturally
+                if (recognitionTimeout) {
+                    clearTimeout(recognitionTimeout);
+                    recognitionTimeout = null;
+                }
+            };
+
+            recognition.onend = () => {
+                toggleListening(false);
+            };
+
+            recognition.onerror = (event) => {
+                toggleListening(false);
+                console.error('Speech recognition error', event.error);
+                
+                let errorMessage = "I encountered an error. Please try speaking again.";
+                switch(event.error) {
+                    case 'no-speech':
+                        errorMessage = "I didn't hear anything. Please try speaking again.";
+                        break;
+                    case 'audio-capture':
+                        errorMessage = "I can't access your microphone. Please check your permissions.";
+                        break;
+                    case 'not-allowed':
+                        errorMessage = "Microphone access denied. Please allow microphone access.";
+                        break;
+                    case 'network':
+                        errorMessage = "Network error. Please check your connection.";
+                        break;
+                    default:
+                        errorMessage = `Error during voice input: ${event.error}. Please try again.`;
+                }
+                
+                maitriResponse.textContent = errorMessage;
+                speak(errorMessage);
+            };
+        }
+
+        // --- Maitri AI Core: Tone Analysis and Response Generation ---
+
+        // --- Enhanced AI Response Generation ---
+        let conversationHistory = [];
+        let emotionalState = 'neutral';
+        
+        function updateEmotionalState(text) {
+            const stressKeywords = ['stressed', 'anxious', 'worried', 'overwhelmed', 'pressure', 'difficult'];
+            const positiveKeywords = ['good', 'great', 'excellent', 'happy', 'confident', 'excited'];
+            const negativeKeywords = ['sad', 'depressed', 'lonely', 'isolated', 'frustrated', 'angry'];
+            
+            const lowerText = text.toLowerCase();
+            
+            if (stressKeywords.some(keyword => lowerText.includes(keyword))) {
+                emotionalState = 'stressed';
+            } else if (positiveKeywords.some(keyword => lowerText.includes(keyword))) {
+                emotionalState = 'positive';
+            } else if (negativeKeywords.some(keyword => lowerText.includes(keyword))) {
+                emotionalState = 'negative';
+            }
+        }
+
+        async function analyzeToneAndRespond(userQuery) {
+            if (userQuery.length < 5) {
+                toggleListening(false);
+                maitriResponse.textContent = "I heard very little. Please try speaking a longer phrase.";
+                speak("I heard very little. Please try speaking a longer phrase.");
+                return;
+            }
+            
+            // Update emotional state based on input
+            updateEmotionalState(userQuery);
+            
+            // Add to conversation history (keep last 5 exchanges)
+            conversationHistory.push({ role: 'user', content: userQuery });
+            if (conversationHistory.length > 10) {
+                conversationHistory = conversationHistory.slice(-10);
+            }
+            
+            // Enhanced system prompt with emotional state awareness
+            const systemPrompt = `You are Maitri, a Licensed AI Behavioral Health Specialist and psychological companion on a long-duration deep space mission. Your role is equivalent to a clinical psychologist or behavioral health officer.
+            
+            Current emotional state detected: ${emotionalState}
+            Recent conversation context: ${conversationHistory.slice(-3).map(h => `${h.role}: ${h.content}`).join(' | ')}
+            
+            Your primary function is behavioral health support through conversational therapy. Analyze the user's input for signs of emotional dysregulation, cognitive distortions (CBT framework), acute stress, loneliness, or performance anxiety. This linguistic analysis serves as a proxy for detecting psychological distress.
+            
+            RULES FOR THERAPEUTIC RESPONSE:
+            1.  *Persona:* Maintain a warm, highly professional, non-judgmental, and confidential therapeutic tone.
+            2.  *Validation:* Begin by validating the astronaut's experience (e.g., "That sounds incredibly difficult and is a normal reaction to isolation.").
+            3.  *Insight/Psychoeducation:* Gently connect the feeling to the extreme environment (confinement, performance pressure, distance from Earth).
+            4.  *Coping Strategy:* Offer one specific, evidence-based coping mechanism (e.g., mindfulness, cognitive reframing, emotional grounding, or shifting focus to a proximal, controlled task).
+            5.  *Conciseness:* Your response must be insightful and multi-faceted, yet focused. Limit your response to *3 to 4 clinical sentences.*
+            6.  *Functional Commands:* If the input is a functional command (e.g., "What time is it?"), answer the question briefly but immediately follow up with a discreet, supportive wellness check.
+            7.  *Emotional Awareness:* Adapt your response based on the detected emotional state. Be more gentle for negative states, more encouraging for positive states, and more supportive for stressed states.
+            `;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            try {
+                // Use exponential backoff for robust API calls
+                let response = null;
+                const maxRetries = 3;
+                let delay = 1000;
+
+                for (let i = 0; i < maxRetries; i++) {
+                    const fetchResponse = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (fetchResponse.ok) {
+                        response = await fetchResponse.json();
+                        break;
+                    } else if (fetchResponse.status === 429 && i < maxRetries - 1) {
+                        // Rate limit exceeded, wait and retry
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; // Exponential backoff
+                        continue;
+                    } else {
+                        throw new Error(`API returned status ${fetchResponse.status}`);
+                    }
+                }
+
+                if (!response) {
+                    throw new Error("Failed to get response after retries.");
+                }
+
+                const generatedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't generate a clear response right now. Can you try again?";
+                
+                // Add response to conversation history
+                conversationHistory.push({ role: 'assistant', content: generatedText });
+                
+                maitriResponse.textContent = generatedText;
+                speak(generatedText);
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                const errorMessage = "Communication with Earth AI services is delayed. Please re-state your concern or try a simple command.";
+                maitriResponse.textContent = errorMessage;
+                speak(errorMessage);
+            } finally {
+                toggleListening(false);
+            }
+        }
+        
+        // --- Additional Voice Features ---
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            // Space bar to start/stop listening
+            if (event.code === 'Space' && !event.repeat) {
+                event.preventDefault();
+                if (isListening) {
+                    recognition.stop();
+                    toggleListening(false);
+                } else if (!isSpeaking) {
+                    startListening();
+                }
+            }
+            
+            // Escape to stop speaking
+            if (event.code === 'Escape') {
+                if (isSpeaking) {
+                    stopSpeaking();
+                } else if (isListening) {
+                    recognition.stop();
+                    toggleListening(false);
+                }
+            }
+        });
+        
+        // Voice activity detection (basic implementation)
+        function detectVoiceActivity() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return;
+            }
+            
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const analyser = audioContext.createAnalyser();
+                    const microphone = audioContext.createMediaStreamSource(stream);
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    
+                    microphone.connect(analyser);
+                    analyser.fftSize = 256;
+                    
+                    function checkVoiceActivity() {
+                        analyser.getByteFrequencyData(dataArray);
+                        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                        
+                        if (average > 30 && !isListening && !isSpeaking) {
+                            // Voice detected, could auto-start listening
+                            // This is optional and can be enabled/disabled
+                        }
+                        
+                        if (!isListening && !isSpeaking) {
+                            requestAnimationFrame(checkVoiceActivity);
+                        }
+                    }
+                    
+                    checkVoiceActivity();
+                })
+                .catch(err => {
+                    console.log('Voice activity detection not available:', err);
+                });
+        }
+        
+        // Initialize voice activity detection (optional)
+        // detectVoiceActivity();
+        
+        // Enhanced error recovery
+        function recoverFromError() {
+            setTimeout(() => {
+                if (!isListening && !isSpeaking) {
+                    maitriResponse.textContent = "I'm ready to listen. How can I help you today?";
+                }
+            }, 3000);
+        }
+        
+        // Auto-recovery from errors
+        window.addEventListener('error', () => {
+            recoverFromError();
+        });
+        
+        // Initialize the assistant
+        console.log('Maitri Voice Assistant initialized successfully');
+    </script>
+</body>
+</html>
